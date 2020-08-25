@@ -1,10 +1,11 @@
 ---
 title: "Exploratory data analysis and Modelization"
 output:
-  html_notebook: default
   html_document:
     fig_height: 8
     fig_width: 8
+  html_notebook:
+    fig_height: 9
   pdf_document: default
 ---
 # EXPLORATORY DATA ANALYSIS
@@ -142,23 +143,6 @@ histogram((data$tip_amount/data$fare_amount)*100, par.settings=myTheme, xlab="ti
 
 Most of the tips are between the 20 and 25% of the fare amount.
 
-We can plot the rest of the variables together:
-```{r, warning=FALSE, message=FALSE}
-# extract from the dataset the numeric variables
-df  <-  data[, c(5,11,14,17)]
-df  <-  melt(df)
-
-# Theme characteristics for plots.
-myTheme  <- custom.theme(pch=20, cex=0.5)
-myTheme$strip.background$col  <- "white"
-
-# Frequency of data in each variable
-histogram(~value|variable, data=df, par.settings=myTheme, xlab=" ",scales='free')
-
-```
-
-All the records are centered around small values. 
-
 ### 1. Trip time duration
 
 Another numeric variable that could be relevant is the duration of each trip. We can calculate this variable from the pick up and drop off time.
@@ -211,14 +195,71 @@ ggplot(df, aes(x=variable,y=value)) +
 
 ```
 
+
 ### 2. Numerical variables relationships
 
 We can have a look on the scatterplots of the numerical variables: a linear relationship is seen, but with some stratified characteristics. If we hava a look on the tip amount at the center of the scatterplot matrix, we can see that there are some values of constant 'tip amount' independently of the fare amount.
 
 ```{r}
-splom(data[,c(5,11,14,17,18)], cex=0.3,alpha=0.5,par.settings=myTheme, auto.key=TRUE)
+pairs(data[,c(5,11,14,17,18)], cex=0.3)
+```
+
+Seen the general linear relationship, we can remove some of the outliers.
+
+```{r}
+## First, calculate the quantiles and the IQR in the numeric variables:
+
+quant  <-  function(x) {
+    q  <-  quantile(x, probs=c(.25 ,.75))
+    iqr  <- IQR(x)
+    
+    up  <-  q[2] + 1.5 *iqr
+    down  <- q[1] - 1.5 *iqr
+
+    c  <- c(up,down)
+    c
+}
+
+## apply this function to the 5 relevant numeric variables:
+
+var  <-  list("trip_distance","fare_amount","tip_amount","tolls_amount","total_amount")
+q  <- lapply(var, FUN=function(x) quant(data[,x]))
+names(q) <- var
+
+## filter the dataset with these conditions:
+
+subsetq <-  function(x) {
+    for (i in 1:length(var)) {
+        out  <- subset(x, x[var[[i]]] < (q[[i]][1]) & x[var[[i]]] > (q[[i]][2]))
+        
+    }
+    out
+}
+
+data  <- subsetq(data)
+ 
+df  <-  data[, c(5,11,14,15,17)]
+df  <-  melt(df)
 
 ```
+
+If we represent again the data:
+
+```{r}
+# extract from the dataset the numeric variables
+df  <-  data[, c(5,11,14,17,18)]
+df$tipPer <- df[,3]/df[,2]*100 
+df  <-  melt(df)
+
+ggplot(df, aes(x=variable,y=value)) +
+    geom_violin(trim=FALSE)+  
+    geom_boxplot(width=0.2, outlier.shape=NA, aes(fill=value)) +
+    labs(x=" ", y=" ") +
+     facet_wrap(~ variable, scales='free')
+
+```
+
+
 
 ### 3. Hour off pick up or drop off
 
@@ -490,7 +531,7 @@ ggplot(b, aes(x=pu_do,y=value)) +
 
 ```
 
-The above picture shows that the are few differences on the data distribution of each variable regardless the *pick up* and *drop off area*. Among areas, we see how the borough of Manhattan is the one with lower fare, tip amount, trip distance and trip duration. We also see that the borough of staten Island is the one that presents higher values for all the variables, but we cannot forget that it is a borough with few data records. 
+The above picture shows that the are few differences on the data distribution of each variable regardless the *pick up* and *drop off area*. Among areas, we see how the borough of Manhattan is the one with lower fare, tip amount, trip distance and trip duration.
 
 
 #### Relationship with day of the week
@@ -506,7 +547,7 @@ ggplot(all, aes(x=weekday,y=value)) +
 
 ```
 
-The figure shows that for the fare, the tip and the trip distance, the sunday is different from the rest of the week, with higher median values. For the trip duration, it seems to be the central days of the weeks the ones with higher values.
+The figure shows that he sunday is different from the rest of the week, with higher median values fro the trip distance. However, the rest of the variables it seems to be higher in the central days of the weeks. Differences are small in any case.
 
 #### Showing the intra trip variable
 
@@ -582,10 +623,10 @@ Also we observe how most of the data of airports have a different distribution c
 df <- data
 df$tipPer <- data[,14]/data[,11]*100
   
-ggpairs(df[, c(5,11,29,17,18)], aes(colour = df$PU_servicezone, alpha = 0.4), upper = list(continuous = wrap("cor", size=2.5)),lower = list(continuous = wrap(funcVal="points", alpha = 1, size=0.5)))
+ggpairs(df[, c(5,11,29,17,18)], aes(colour = df$PU_servicezone, alpha = 0.4), upper = list(continuous = wrap("cor", size=2.5)),lower = list(continuous = wrap(funcVal="points", alpha = 0.5, size=0.5)))
 ```
 
-In this case, the % tip is centered in 20-25% when the taxi is picked up in the Yellow or Boro Zone. In the case of the airports, we see a bimodal distribution, with a second maximum in 25%.
+In this case, the % tip is centered in 20-25% when the taxi is picked up in the Yellow or Boro Zone. In the case of the airports, we see a bimodal distribution, with a second maximum beyond 25%. However, it is important to notice that the amount of data from boroughs different to Manhattan is scarce.
 
 ### 4.3 Mean variables by Location ID
 
@@ -678,10 +719,16 @@ About the cleaning process:
 * In order to narrow down the data, the tip amount is taken if it is between 10% and 20% of the fare amount. This is made in thinking in the modeling step, in which a recommendation on the tip wants to be made depending on other variables.
 * Some time records are incorrect, the drop off happends before the pick up.
 
-In general: 
+About the exploratory analysis:
 
 * The taxi tips distribution have a maximum around 20 to 25 %.
-* In general, the 
+* Some linear relationship is found between the tip amount and:
+  + fare amount
+  + trip distance
+  + trip duration
+* Most of the data records are from and to Manhattan
+* Most of the trips are made during the day
+* The distribution of the trips inside the same borough is different from those trips that are picked up in one borough and finised in a different one.
 
 # MODELIZATION
 
@@ -691,7 +738,7 @@ The data is download from the website. As in the exploratory analysis, a sample 
 
 ### 1.1 Cleaning 
 
-After reading the data, it is cleaned taking into account thefindings of the exploratory data analysis and some new variables are included:
+After reading the data, it is cleaned taking into account the findings of the exploratory data analysis and some new variables are included:
 
 In the cleaning phase:
 
@@ -781,7 +828,7 @@ lm$coefficients
 
 ```
 
-The training show a good performance of the linear regression. We can check for the importance of the different variables. 
+The training show a good performance of the linear regression. We can check for the importance of the different variables in the summary of the model.
 
 
 **Test the model**
@@ -793,10 +840,17 @@ ytest  <- read.csv("data/ytest.csv")
 predictions  <- predict(lm, xtest, interval="prediction")
 results  <- cbind(ytest, predictions)
 
-summary(lm)
 ```
 
-The model works similar in the test data. We can check the predictions and we can also see that the errors are normally distributed.
+The xyplot for the test and predicted:
+
+```{r}
+plot(results$x~results$fit, xlab='predictions', ylab='test', cex=0.5)
+abline(0,1, col='red')
+```
+
+
+We can check the predictions and we can also see that the errors are normally distributed.
 
 ```{r}
 ## Normal distribution of residuals.
@@ -810,6 +864,13 @@ We can use the RMSE as an indicator of the model performance:
 ```{r}
 ## RMSE
 RMSE_lm <- sqrt(mean((results$x - results$fit)^2))
+```
+
+However, the variance of the residuals is not constant, which means that the linear model is not the best solution to this problem. It could be that we are missing some predictors or that some of the data collectd (those records with constant tip regardless the fare) cannot be used in the  model.
+
+```{r}
+plot(lm$residuals~lm$fitted.values, cex=0.5, xlab='fit values', ylab='residuals')
+abline(c(0,0), col='red')
 ```
 
 
@@ -852,5 +913,15 @@ The relative error can be represented. Most of the time the error is small, but 
 err  <- round((abs(results$x-results$rf_predict)/results$x)*100, digits=1)
 histogram(err, par.settings=myTheme)
 ```
+
+# FURTHER ANALYSIS
+
+In order to go beyond this analysis:
+
+* We could enrich the analysis with data from every month of the year, in order to investigate **seasonality** in the data. Up to now only three months have been considered, so the complete *annual cycle* could be interesting to see if there is seasonality.
+
+* A global picture of the whole "taxi" sector is better done with all the datasets from other types of vehicles. In this analysis, only the 'yellow' taxi data is used, so it would be better to include the rest of the datasets. 
+
+* We could also look for other variables that potentially could be interesting for the tip variable. Like knowing about the  most dense **traffic hours** in each area, some **weather data** to look for patterns in the temporal series, etc.
 
 
