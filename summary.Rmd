@@ -914,6 +914,8 @@ err  <- round((abs(results$x-results$rf_predict)/results$x)*100, digits=1)
 histogram(err, par.settings=myTheme)
 ```
 
+The random forest approach slightly improves the multivariate regression model.
+
 # FURTHER ANALYSIS
 
 In order to go beyond this analysis:
@@ -923,5 +925,7 @@ In order to go beyond this analysis:
 * A global picture of the whole "taxi" sector is better done with all the datasets from other types of vehicles. In this analysis, only the 'yellow' taxi data is used, so it would be better to include the rest of the datasets. 
 
 * We could also look for other variables that potentially could be interesting for the tip variable. Like knowing about the  most dense **traffic hours** in each area, some **weather data** to look for patterns in the temporal series, etc.
+
+* As seen in the data, the tip amount have a clear linear pattern with different slopes. If it could be done a first classification to separate the lines with different slopes, the regression problem adapted to each case would work better.
 
 
