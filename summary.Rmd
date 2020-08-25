@@ -1,13 +1,14 @@
 ---
-title: "Exploratory data analysis"
+title: "Exploratory data analysis and Modelization"
 output:
-  html_document: 
+  html_document:
     fig_height: 8
     fig_width: 8
   html_notebook: default
   pdf_document: default
 ---
-## Data preparation
+# EXPLORATORY DATA ANALYSIS
+## 1. Data preparation
 
 The data have been downloaded from the website and a basic cleaning has been done in the preparation step. Due to the size of the dataset, which is 2.5 Gb for 3 months of data, a sample is obtained in order to explore the data in more efficiently. 
 
@@ -39,7 +40,7 @@ library(lubridate)
 ```
 
 
-## 1. Read the taxi data
+### 1. Read the taxi data
 
 The sample data is read after the preparation step which includes a basic cleaning and preparation of the data.
 
@@ -47,14 +48,14 @@ The sample data is read after the preparation step which includes a basic cleani
 data  <-  read.csv("data/taxi_sample_data.csv")
 ```
 
-## 2. Load the taxi zone data
+### 2. Load the taxi zone data
 
 Besides the records of trips, the website includes a .csv with the taxi zones in New York
 ```{r, echo=TRUE,warning=FALSE, message=FALSE}
 zones <-  read.csv("data/taxi_zones.csv")
 ```
 
-## 3. plot the area of the analysis
+### 3. Plot the area of the analysis
 
 ```{r, echo=FALSE, results='hide',warning=FALSE, message=FALSE}
 
@@ -63,7 +64,7 @@ zones <-  read.csv("data/taxi_zones.csv")
 spZones <- st_read("data/taxi_zones.shp")
 ```
 
-### TCL zones
+### 4. TCL zones
 
 ```{r}
 plot(spZones["zone"])
@@ -83,7 +84,7 @@ service <-  ggplot() + geom_sf(data=a, aes(fill = service_zone))
 service
 ```
 
-## 4. Make a summary of the dataset for a first analysis.
+### 5. Make a summary of the dataset for a first analysis.
 
 ```{r}
 summary(data)
@@ -91,7 +92,7 @@ summary(data)
 
 Main characteristics seen in summary are related to the numeric variables, where maximum values are much higher than the mean or the median: total amount, tip amount, tolls, fare amount etc. This could be related to outliers or skewed distributions of the data.
 
-## 5. Numeric variables
+## 2. Numeric variables
 
 We will now explore the numeric variables and look for the main characteristics and data distributions.
 
@@ -108,10 +109,10 @@ myTheme$strip.background$col  <- "white"
 histogram(~value|variable, data=df, par.settings=myTheme, xlab=" ", scales='free')
 ```
 
-The boxplot can also help to see the data distribution. There are some data records which present very high values for the numeric variables.
+The boxplot can also help to see the data distribution. There are some data records which present very high values for the numeric variables. So the distribution does not seem to be normal.
 ```{r}
 
-ggplot(df, aes(y=value)) +
+ggplot(df, aes(x=variable,y=value)) +
     geom_boxplot(aes(fill=value),outlier.size = 0.1) +
     labs(x=" ", y=" ") +
      facet_wrap(~ variable, scales='free')
@@ -151,11 +152,12 @@ myTheme$strip.background$col  <- "white"
 
 # Frequency of data in each variable
 histogram(~value|variable, data=df, par.settings=myTheme, xlab=" ",scales='free')
+
 ```
 
-All the records are centered around small values.
+All the records are centered around small values. 
 
-### Trip time duration
+### 1. Trip time duration
 
 Another numeric variable that could be relevant is the duration of each trip. We can calculate this variable from the pick up and drop off time.
 
@@ -190,7 +192,7 @@ df  <-  melt(df)
 histogram(data$trip_timelength, par.settings=myTheme, xlab="trip time duration", scales='free')
 ```
 
-We can now plot all the numeric variables together again and we will see how the largest values in the fare amount have been removed at the same time that the negative trip duration. The density functions helps with the shape of the data distributions. 
+We can now plot all the numeric variables together again and we will see how the largest values in the fare amount have been removed at the same time that the negative trip duration. The boxplot show us the general statistics of the data, with the median value and the range of the quartiles, howevr, the density functions helps with the shape of the data distributions when it is different from the normal shape. 
 
 
 ```{r}
@@ -199,18 +201,15 @@ df  <-  data[, c(5,11,14,17,18)]
 df$tipPer <- df[,3]/df[,2]*100 
 df  <-  melt(df)
 
-# Theme characteristics for plots.
-myTheme  <- custom.theme(pch=20, cex=0.5)
-myTheme$strip.background$col  <- "white"
-
-# Frequency of data in each variable
-ggplot(df, aes(y=value)) +
-    geom_boxplot(aes(fill=value),outlier.size = 0.1) +
+ggplot(df, aes(x=variable,y=value)) +
+    geom_violin(trim=FALSE)+  
+    geom_boxplot(width=0.2, outlier.shape=NA, aes(fill=value)) +
     labs(x=" ", y=" ") +
      facet_wrap(~ variable, scales='free')
+
 ```
 
-### Numerical variables relationships
+### 2. Numerical variables relationships
 
 We can have a look on the scatterplots of the numerical variables: a linear relationship is seen, but with some stratified characteristics. If we hava a look on the tip amount at the center of the scatterplot matrix, we can see that there are some values of constant 'tip amount' independently of the fare amount.
 
@@ -219,7 +218,7 @@ splom(data[,c(5,11,14,17,18)], cex=0.3,alpha=0.5,par.settings=myTheme, auto.key=
 
 ```
 
-### Hour off pick up or drop off
+### 3. Hour off pick up or drop off
 
 Another variable that could be relevant is the time of pick up or drop off the taxi. Create new columns with the time (hour) of the pick up and drop off.
 
@@ -267,7 +266,7 @@ group_by(t_pu) %>%
 dotplot(m~as.factor(t_pu), data=df, pch=20, grid=TRUE, cex=2, ylab='median % tip', xlab='time', par.settings=myTheme)
 ```
 
-## 6. Categorical variables
+## 3. Categorical variables
 
 After having seen the numeric variables of the dataset, we take care of the categorical variables that it includes.
 
@@ -284,7 +283,7 @@ histogram(data$RatecodeID, par.settings=myTheme)
 which(data$RatecodID != 1)
 ```
 
-### Pick up and drop off location ID:
+### 1. Pick up and drop off location ID:
 
 From the zones .csv there is information about the zones LocationID, Borough and service zone. We create 2 columns in the dataframe with the PU (pick up) and DO (drop off) service and borough zone.
 
@@ -402,7 +401,7 @@ do
 
 As it is the yellow taxi data, most of the trips are in the Manhattan area.
 
-### New categorical variables:
+### 2. New categorical variables:
 
 #### Day-night
 
@@ -455,11 +454,11 @@ data[which(data$PU_boroughzone == data$DO_boroughzone), "intratrip"] <- "no"
 histogram(as.factor(data$intratrip), par.settings=myTheme, xlab='intra-trip')
 ```
 
-## 7. Numeric variables and categorical variables
+## 4. Numeric variables and categorical variables
 
-### 7.1 boxplot for trip variables
+### 4.1 boxplot for trip variables
 
-#### Relatinship with the borough:
+#### Relationship with the borough:
 
 First, we represent numeric variables depending on some categorical variables like: the pick up or drop off area or the rate code at the end of the trip.
 
@@ -488,7 +487,7 @@ ggplot(b, aes(x=pu_do,y=value)) +
 
 ```
 
-#### Relatinship with day of the week
+#### Relationship with day of the week
 ```{r}
 all <- data[,c(5,11,14,17,18,27)]
 all <- melt(all, 'weekday')
@@ -518,7 +517,7 @@ b  <-  melt(all)[,2:4]
 names(b)  <-  c("intratrip","variable","value")
 
 ggplot(b, aes(x=intratrip,y=value)) +
-    geom_boxplot(aes(fill=intratrip),outlier.size = 0.1) + scale_fill_brewer(palette="Paired") +
+       geom_boxplot(aes(fill=intratrip),outlier.size = 0.1) + scale_fill_brewer(palette="Paired") +
     labs(x=" ", y=" ") +
      facet_wrap(~ variable, scales='free')
 ```
@@ -553,17 +552,36 @@ ggplot(tip, aes(x=t_puH,y=tipPer)) +
 ```
 
 
-### 7.2. scatterplots with the 5 numeric relevant variables. Linear relationship.
+### 4.2. scatterplots with the 5 numeric relevant variables. Linear relationship.
 
 ```{r, warning=FALSE, message=FALSE}
-splom(~data[,c(5,11,14,17,18)]|as.factor(data$PU_servicezone), par.settings=myTheme, cex=0.1, groups=data$t_puH, auto.key=TRUE, data=data,varnames=c("distance","fare","tip","total","duration"))
+library(GGally)
+ggpairs(data[,c(5,11,14,17,18)], aes(colour = data$t_puH, alpha = 0.4), upper = list(continuous = wrap("cor", size=2.5)),lower = list(continuous = wrap(funcVal="points", alpha = 1, size=0.5)))
 ```
 
-Main differences are found in the time length of the trips, where the daytime records show data where the same distance takes longer in comparison with night-time recors.  Also we observe how most of the data of airports is taken during the day and the same distance takes clearly less amount of time during night hours. This is probably due to traffic hours.
+Main differences are found in the time length of the trips, where the daytime records show data where the same distance takes longer in comparison with night-time recors. These 2 variables are the ones that correlates less, although night data correlates better.
 
-### 7.3 Mean tip by Location ID depending on the pick up or drop off.
+```{r}
+ggpairs(data[, c(5,11,14,17,18)], aes(colour = data$PU_servicezone, alpha = 0.4), upper = list(continuous = wrap("cor", size=2.5)),lower = list(continuous = wrap(funcVal="points", alpha = 1, size=0.5)))
+
+```
+
+Also we observe how most of the data of airports have a different distribution compared to the other areas. In general, trips from the airport are more expensive an takes more time. Aditionally the tip amount is higher. If we check if this also happends with the tip %:
 
 
+
+```{r}
+df <- data
+df$tipPer <- data[,14]/data[,11]*100
+  
+ggpairs(df[, c(5,11,29,17,18)], aes(colour = df$PU_servicezone, alpha = 0.4), upper = list(continuous = wrap("cor", size=2.5)),lower = list(continuous = wrap(funcVal="points", alpha = 1, size=0.5)))
+```
+
+In this case, the % tip is centered in 20-25% when the taxi is picked up in the Yellow or Boro Zone. In the case of the airports, we see a bimodal distribution, with a second maximum in 25%.
+
+### 4.3 Mean tip by Location ID depending on the pick up or drop off.
+
+#### Spatial representation
 ```{r}
 data$tipPer <-data[,14]/data[,11]*100
 
@@ -581,8 +599,8 @@ names(DO_tip) <- c("LocationID","DO_mean")
 
 ```
 
-plot
-
+Plot of the mean tip (in %) depending on the pick up location.
+ 
 ```{r}
 d <- merge(spZones, PU_tip, by='LocationID')  
 pu_tip<-  ggplot() + geom_sf(data=d, aes(fill = PU_mean))+scale_fill_continuous(type='viridis')
@@ -593,13 +611,13 @@ do_tip<-  ggplot() + geom_sf(data=e, aes(fill = DO_mean))+scale_fill_continuous(
 pu_tip
 ```
 
+Same as previous figure but depending on the drop off location.
 
 ```{r}
 do_tip
 ```
 
-
-trip length
+In addition to the tip % we can represent the mean distance of each trip depending on the pick up and drop off location.
 
 ```{r}
 PU_length  <-  data %>%
@@ -616,7 +634,7 @@ names(DO_length) <- c("LocationID","DO_length")
 
 ```
 
-plot
+For the pick up location:
 
 ```{r}
 f  <- merge(spZones, PU_length, by='LocationID')  
@@ -628,12 +646,13 @@ do_length  <- ggplot() + geom_sf(data=g, aes(fill = DO_length))+scale_fill_conti
 pu_length
 ```
 
+And the drop off:
 ```{r}
 do_length
 ```
 
 
-# CONCLUSIONS
+# 5. Conclusions
 
 Some insights can be derived from the dataset of the taxi data: 
 
@@ -647,9 +666,6 @@ In general:
 
 * The taxi tips distribution have a maximum around 20 to 25 %.
 * In general, the 
-
-
-
 
 # MODELIZATION
 
@@ -731,7 +747,7 @@ names(train)  <- c("tip_amount",names(xtrain))
 
 ```
 
-### 1. Multivariate regression model
+### 2.1. Multivariate regression model
 
 We first test a multivariate linear regression model. The numerical variables include will be the fare amount, the trip duration, the trip distance. Additionally we will include 2 categorical variables: the day of the week and if the trip is inside the same borough or not (the 'intratrip' variable).
 
@@ -781,7 +797,7 @@ RMSE_lm <- sqrt(mean((results$x - results$fit)^2))
 ```
 
 
-### 1. Random Forest
+### 2.2 Random Forest
 
 We now check a random forest in order to check if it improves the predictions of the multilinear model.
 
