@@ -1,28 +1,28 @@
 ---
 title: "Exploratory data analysis and Modelization"
 output:
+  html_notebook: default
   html_document:
     fig_height: 8
     fig_width: 8
-  html_notebook: default
   pdf_document: default
 ---
 # EXPLORATORY DATA ANALYSIS
 ## 1. Data preparation
 
-The data have been downloaded from the website and a basic cleaning has been done in the preparation step. Due to the size of the dataset, which is 2.5 Gb for 3 months of data, a sample is obtained in order to explore the data in more efficiently. 
+The data have been downloaded from the website and a basic cleaning has been done in the preparation step. Due to the size of the dataset, which is 2.5 Gb for 3 months of data, a sample is obtained in order to explore the data more efficiently. 
 
 The preparation of the data include:
 
   * Remove the N/A values of the data
-  * Before check for variables and its meaning, extract the values among its range:
+  * After check for the variables and its meaning, extract the values among its (logical) range:
     +  fare > 0 
     +  trip distance > 0
     + extra charges >= 0
     + tolls >= 0
     + total amount > 0
     + improvement surchage == 0.3
-    + passesngers <= 0
+    + passesngers >= 0
   
 Load the libraries
 
@@ -64,7 +64,7 @@ zones <-  read.csv("data/taxi_zones.csv")
 spZones <- st_read("data/taxi_zones.shp")
 ```
 
-### 4. TCL zones
+#### TCL zones
 
 ```{r}
 plot(spZones["zone"])
@@ -84,7 +84,7 @@ service <-  ggplot() + geom_sf(data=a, aes(fill = service_zone))
 service
 ```
 
-### 5. Make a summary of the dataset for a first analysis.
+### 4. Make a summary of the dataset for a first analysis.
 
 ```{r}
 summary(data)
@@ -118,9 +118,11 @@ ggplot(df, aes(x=variable,y=value)) +
      facet_wrap(~ variable, scales='free')
 ```
 
-We include new conditions for the numeric variables. The total, fare and tip amount have extremely large values.
+We include new conditions for the numeric variables. The total, *fare* and *tip amount* have extremely large values.
 
-We also check that some records have lower fares than tips. Aditionally, the tip should be at least 10% of the fare and we also consider only tips below 30% of the fare. The idea is to recommend a tip depending on other variables, but a tip above 30% cannot be recommended.
+We also check that some records have lower fares than tips, so that values are removed.
+
+Aditionally, the tip should be at least 10% of the fare and we also consider only tips below 30% of the fare. The idea is to recommend a tip depending on other variables, but a tip above 30% cannot be recommended.
 
 Remove records with fares lower than tips and tips lower than 10% and above 30%:
 
@@ -132,7 +134,7 @@ data  <-  data[data$tip_amount < 0.3*data$fare_amount,]
 histogram(data$tip_amount, par.settings=myTheme, xlab="tip amount")
 ```
 
-How it is this in %?
+We can have a look on the tip amount as a % of the fare amount.
 
 ```{r}
 histogram((data$tip_amount/data$fare_amount)*100, par.settings=myTheme, xlab="tip amount")
@@ -175,7 +177,7 @@ data$tpep_dropoff_datetime <- with_tz(data$tpep_dropoff_datetime, tzone = "Ameri
 
 ## new column with the differences:
 
-## it takes some minutes
+## it takes few minutes
 data$trip_timelength  <- apply(data, 1, FUN=function(x) difftime(x[3], x[2]))
 
 # Plot the new variable
@@ -192,7 +194,7 @@ df  <-  melt(df)
 histogram(data$trip_timelength, par.settings=myTheme, xlab="trip time duration", scales='free')
 ```
 
-We can now plot all the numeric variables together again and we will see how the largest values in the fare amount have been removed at the same time that the negative trip duration. The boxplot show us the general statistics of the data, with the median value and the range of the quartiles, howevr, the density functions helps with the shape of the data distributions when it is different from the normal shape. 
+We can now plot all the numeric variables together again and we will see how the largest values in the fare amount have been removed at the same time that the negative trip duration. The boxplots show us the general statistics of the data, with the median value and the range of the quantiles; we can as well add the density functions in a violin plot, which helps with the shape of the data distributions when it is different from the normal. 
 
 
 ```{r}
@@ -247,6 +249,7 @@ group_by(t_pu) %>%
  
 dotplot(m~as.factor(t_pu), data=df, pch=20, grid=TRUE, cex=2, ylab='median tip', xlab='time', par.settings=myTheme)
 ```
+
 Between 0 and 8 in the morning, the median tip amount behaves different, but we should be **careful**, due to the fact that it is the beriod with less records and the conclusions might not be representative.
 
 
@@ -339,7 +342,7 @@ data$DO_boroughzone <-  factor(data$DO_boroughzone, levels=c("Bronx", "Brooklyn"
 
 ```
 
-We can now plot the **frequency** of each **trip** depending on its **pick up** and **drop off** area. The next figure shows how most of the trips are picked up in Manhattan, and they finish in the same area. Few trips that started in Manhattan finish in Brooklyd and Queens.
+We can now plot the **frequency** of each **trip** depending on its **pick up** and **drop off** area. The next figure shows how most of the trips are picked up in Manhattan, and they finish in the same area. Few trips that started in Manhattan finish in Brooklyn and Queens.
 
 ```{r}
 df <- data[,c(23,24)]
@@ -347,7 +350,7 @@ df <- data[,c(23,24)]
 barchart(table(df), auto.key=TRUE, par.settings=myTheme,xlab="times", ylab='pick up')
 ```
 
-It can be observed that most of the trips start at Manhattan and end there as well. A amaller amount of the trips that start at Manhattan go to Brooklyn or Queens. There is few data records that show trips starting also at Queens and Brooklyn, ending in a similar amount in Manhattan, Brooklyn or Queens. These means that most of the flows are inside or to the borough of Manhattan.
+There is also few amount of data records that show trips starting at Queens and Brooklyn, ending in a similar amount in Manhattan, Brooklyn or Queens. So that means that the **trip flows** are inside or to Manhattan.
 
 
 The same can be done by service zone, where we have information about the specific location of airports, what could be interesting.
@@ -424,7 +427,7 @@ data$t_doH  <-  as.factor(data$t_doH)
 histogram(data$t_puH, par.settings=myTheme)
 ```
 
-Most of the trips are made during the day time.
+Most of the trips are made during the day-time.
 
 #### Weekday
 
@@ -439,11 +442,11 @@ data$weekday <- factor(data$weekday, levels=c("domingo","lunes","martes", "miér
 barchart(as.factor(data$weekday), par.settings=myTheme, horizontal=FALSE,xlab='day of the week')
 ```
 
-Although most of the days have similar amount of records, it is clear the day when there are less taxi trips in the New York city.
+Although most of the days have similar amount of records, it is clear that Sunday is the day when there are less taxi trips in the New York city.
 
 #### Intra trip
 
-We create another categorical variable related to the intra characteristic of the record. We consider trips that pick up and drop off in a different borough as intratrip.
+We create another categorical variable related to the intra characteristic of the record. We consider trips that pick up and drop off in a different borough as intratrip. Next graph shows how most of the trip records are made in the same borough.
 
 
 ```{r, warning=FALSE,message=FALSE}
@@ -458,9 +461,9 @@ histogram(as.factor(data$intratrip), par.settings=myTheme, xlab='intra-trip')
 
 ### 4.1 boxplot for trip variables
 
-#### Relationship with the borough:
+We can represent numeric variables depending on some categorical variables like: the pick up or drop off area or the day of the week. 
 
-First, we represent numeric variables depending on some categorical variables like: the pick up or drop off area or the rate code at the end of the trip.
+#### Relationship with the borough:
 
 ```{r}
 ## all together:
@@ -483,22 +486,27 @@ b[(b$pu_do == "DO_boroughzone"), "pu_do"] <- 'DO'
 ggplot(b, aes(x=pu_do,y=value)) +
     geom_boxplot(aes(fill=borough),outlier.size = 0.1) + scale_fill_brewer(palette="Paired") +
     labs(x=" ", y=" ") +
-     facet_wrap(~ variable, scales='free', ncol=2)
+     facet_wrap(~ variable, scales='free', ncol=2) + theme(legend.position="top")
 
 ```
+
+The above picture shows that the are few differences on the data distribution of each variable regardless the *pick up* and *drop off area*. Among areas, we see how the borough of Manhattan is the one with lower fare, tip amount, trip distance and trip duration. We also see that the borough of staten Island is the one that presents higher values for all the variables, but we cannot forget that it is a borough with few data records. 
+
 
 #### Relationship with day of the week
 ```{r}
-all <- data[,c(5,11,14,17,18,27)]
+all <- data[,c(5,11,14,18,27)]
 all <- melt(all, 'weekday')
 
 ggplot(all, aes(x=weekday,y=value)) +
-    geom_boxplot(aes(fill=weekday),outlier.size = 0.1) + scale_fill_brewer(palette="Paired") +
+  geom_violin(trim=FALSE)+
+    geom_boxplot(aes(fill=weekday),outlier.size = 0.1, outlier.shape = NA, width=0.3) + scale_fill_brewer(palette="Paired") +
     labs(x=" ", y=" ") +
-     facet_wrap(~ variable, scales='free', ncol=2)
+     facet_wrap(~ variable, scales='free', ncol=2)+ theme(legend.position="top")
 
 ```
 
+The figure shows that for the fare, the tip and the trip distance, the sunday is different from the rest of the week, with higher median values. For the trip duration, it seems to be the central days of the weeks the ones with higher values.
 
 #### Showing the intra trip variable
 
@@ -530,16 +538,16 @@ tip  <-  data[,c(11,14,28)]
 tip$tipPer <- tip[,2]/tip[,1]*100
 
 ggplot(tip, aes(x=intratrip,y=tipPer)) +
-  labs(x=" ", y="tip % ")+
+    labs(x=" ", y="tip % ")+
     geom_boxplot(aes(fill=intratrip),outlier.size = 0.1)+ scale_fill_brewer(palette="Paired") 
 
 ```
 
-The median tip % is lower for the intra-borough trips although as seen in previous figure the tio amount is largest.
+The *median tip %* is lower for the intra-borough trips although as seen in previous figure the tip amount is largest.
 
 #### tip % and day-night time
 
-We can also evaluate if the tip % changes with the time the taxi is pick up.
+We can also evaluate if the tip % changes with the time the taxi is picked up. It doesn't seem to be important differences.
 ```{r}
 ## tip percentage
 tip  <-  data[,c(11,14,25)]
@@ -579,9 +587,9 @@ ggpairs(df[, c(5,11,29,17,18)], aes(colour = df$PU_servicezone, alpha = 0.4), up
 
 In this case, the % tip is centered in 20-25% when the taxi is picked up in the Yellow or Boro Zone. In the case of the airports, we see a bimodal distribution, with a second maximum in 25%.
 
-### 4.3 Mean tip by Location ID depending on the pick up or drop off.
+### 4.3 Mean variables by Location ID
 
-#### Spatial representation
+#### Spatial representation of the mean tip % depdending on the pick up location ID.
 ```{r}
 data$tipPer <-data[,14]/data[,11]*100
 
@@ -599,8 +607,7 @@ names(DO_tip) <- c("LocationID","DO_mean")
 
 ```
 
-Plot of the mean tip (in %) depending on the pick up location.
- 
+
 ```{r}
 d <- merge(spZones, PU_tip, by='LocationID')  
 pu_tip<-  ggplot() + geom_sf(data=d, aes(fill = PU_mean))+scale_fill_continuous(type='viridis')
@@ -611,13 +618,19 @@ do_tip<-  ggplot() + geom_sf(data=e, aes(fill = DO_mean))+scale_fill_continuous(
 pu_tip
 ```
 
-Same as previous figure but depending on the drop off location.
+Most of the locations are around 20to 23 but few of them present values below 15 and above 25.
+
+We can present the same as previous figure but depending on the drop off location.
 
 ```{r}
 do_tip
 ```
 
-In addition to the tip % we can represent the mean distance of each trip depending on the pick up and drop off location.
+In this cse there is one location with high values with respect to the others. In general there is homogenity.
+
+
+#### Spatial representation of the mean trip distance depdending on the pick up location ID.
+
 
 ```{r}
 PU_length  <-  data %>%
@@ -646,11 +659,14 @@ do_length  <- ggplot() + geom_sf(data=g, aes(fill = DO_length))+scale_fill_conti
 pu_length
 ```
 
+Only the location in the Staten Islands presents trip length around 30 and clearly the airports are around 20 miles. The rest are below 10 in general.
+
 And the drop off:
 ```{r}
 do_length
 ```
 
+The same map depdending on the drop off is a bit different. It seems to be a cluster centered in Manhattan with the lower values and largest values goes to the margins of the figure. This has sense if we consider that most of the trips comes from the Manhattan area, so the distance increases for the locations far from that borough.
 
 # 5. Conclusions
 
