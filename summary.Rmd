@@ -237,10 +237,6 @@ subsetq <-  function(x) {
 }
 
 data  <- subsetq(data)
- 
-df  <-  data[, c(5,11,14,15,17)]
-df  <-  melt(df)
-
 ```
 
 If we represent again the data:
