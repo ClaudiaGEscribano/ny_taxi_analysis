@@ -25,9 +25,9 @@ The preparation of the data include:
     + improvement surchage == 0.3
     + passesngers >= 0
   
-Load the libraries
+Load the libraries.
 
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE}
 library(dplyr)
 library(reshape2)
 library(magrittr)
@@ -198,13 +198,13 @@ ggplot(df, aes(x=variable,y=value)) +
 
 ### 2. Numerical variables relationships
 
-We can have a look on the scatterplots of the numerical variables: a linear relationship is seen, but with some stratified characteristics. If we hava a look on the tip amount at the center of the scatterplot matrix, we can see that there are some values of constant 'tip amount' independently of the fare amount.
+We can have a look on the scatterplots of the numerical variables: a linear relationship is seen, but with some stratified characteristics. If we have a look on the tip amount at the center of the scatterplot matrix, we can see that there are some values of constant 'tip amount' independently of the fare amount.
 
 ```{r}
 pairs(data[,c(5,11,14,17,18)], cex=0.3)
 ```
 
-Seen the general linear relationship, we can remove some of the outliers.
+Once the general linear relationship is seen, we can remove some of the outliers.
 
 ```{r}
 ## First, calculate the quantiles and the IQR in the numeric variables:
@@ -290,7 +290,7 @@ dotplot(m~as.factor(t_pu), data=df, pch=20, grid=TRUE, cex=2, ylab='median tip',
 Between 0 and 8 in the morning, the median tip amount behaves different, but we should be **careful**, due to the fact that it is the beriod with less records and the conclusions might not be representative.
 
 
-We can ask ourselve if it does the time of pick up influence on that amount. The median tip % of each record is representd for each hour. Again, it is difficult to find a conclusion due to the lack of data in the range of 0 to 9 hours, but highest value is found at 9 a.m and a trend for higher values between 11 to 12.
+The median value of tip (%) is representd for each hour. Again, it is difficult to find a conclusion due to the lack of data in the range of 0 to 9 hours, but highest value is found at 9 a.m and a trend for higher values between 11 to 12.
 
 
 ```{r}
@@ -387,7 +387,7 @@ df <- data[,c(23,24)]
 barchart(table(df), auto.key=TRUE, par.settings=myTheme,xlab="times", ylab='pick up')
 ```
 
-There is also few amount of data records that show trips starting at Queens and Brooklyn, ending in a similar amount in Manhattan, Brooklyn or Queens. So that means that the **trip flows** are inside or to Manhattan.
+There is also few amount of data records that show trips starting at Queens and Brooklyn, ending in a similar amount in Manhattan, Brooklyn or Queens. So that means that the **trip flows** are inside or to Manhattan mostly.
 
 
 The same can be done by service zone, where we have information about the specific location of airports, what could be interesting.
@@ -464,7 +464,7 @@ data$t_doH  <-  as.factor(data$t_doH)
 histogram(data$t_puH, par.settings=myTheme)
 ```
 
-Most of the trips are made during the day-time.
+Most of the trips are made during the daytime hours. The selection of the hours is kind of arbitrary ,and a different classification of 'day' and 'night' could be also possible.
 
 #### Weekday
 
@@ -655,7 +655,7 @@ do_tip<-  ggplot() + geom_sf(data=e, aes(fill = DO_mean))+scale_fill_continuous(
 pu_tip
 ```
 
-Most of the locations are around 20to 23 but few of them present values below 15 and above 25.
+Most of the locations are around 20 to 23 but few of them present values below 15 and above 25.
 
 We can present the same as previous figure but depending on the drop off location.
 
@@ -696,14 +696,14 @@ do_length  <- ggplot() + geom_sf(data=g, aes(fill = DO_length))+scale_fill_conti
 pu_length
 ```
 
-Only the location in the Staten Islands presents trip length around 30 and clearly the airports are around 20 miles. The rest are below 10 in general.
+The trip length maximum is around 8 miles. Most of the trips are around 4. Inside Manhattan trip length is around 2 miles.
 
 And the drop off:
 ```{r}
 do_length
 ```
 
-The same map depdending on the drop off is a bit different. It seems to be a cluster centered in Manhattan with the lower values and largest values goes to the margins of the figure. This has sense if we consider that most of the trips comes from the Manhattan area, so the distance increases for the locations far from that borough.
+The same map representation but depdending on the drop off shows different values. It seems to be a cluster centered in Manhattan with the lower values and largest values goes to the margins of the figure (in general). This has sense if we consider that most of the trips comes from the Manhattan area, so the distance increases for the locations far from that borough.
 
 # 5. Conclusions
 
@@ -718,13 +718,10 @@ About the cleaning process:
 About the exploratory analysis:
 
 * The taxi tips distribution have a maximum around 20 to 25 %.
-* Some linear relationship is found between the tip amount and:
-  + fare amount
-  + trip distance
-  + trip duration
+* Some linear relationship is found between the tip amount and: fare amount, trip distance, trip duration
 * Most of the data records are from and to Manhattan
 * Most of the trips are made during the day
-* The distribution of the trips inside the same borough is different from those trips that are picked up in one borough and finised in a different one.
+* The distribution of the trips inside the same borough is different from those trips that are picked up in one borough and finished in a different one.
 
 # MODELIZATION
 
@@ -745,7 +742,7 @@ In the cleaning phase:
     + tolls >= 0
     + total amount > 0
     + improvement surchage == 0.3
-    + passesngers <= 0
+    + passesngers >= 0
 
 The other variables included are:
 * Duration of the trip
@@ -756,7 +753,7 @@ The prepared data is stored as a .csv called *taxi_model_sample_data.csv*. The s
 
 ### 1.2 Sample data
 
-The dataset is then divided in 2. 80% of the data is used as training data and the other 20% is used to test the model. 
+The dataset is then divided: 80% of the data is used as training data and the other 20% is used to test the model. 
 
 ```{r}
 
