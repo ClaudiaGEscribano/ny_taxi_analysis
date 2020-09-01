@@ -791,8 +791,6 @@ Code for the model run can be found in 'model_run.R', but I will reproduce it he
 
 ## As seen in the EDA there is linear relationship among the numeric variables selected. Some of them are linear dependent on other, what should be seen in our model.
 
-library(MASS)
-
 ## Load the train data:
 
 xtrain <- read.csv("data/xtrain.csv")
@@ -832,7 +830,6 @@ ytest  <- read.csv("data/ytest.csv")
 
 predictions  <- predict(lm, xtest, interval="prediction")
 results  <- cbind(ytest, predictions)
-
 ```
 
 The xyplot for the test and predicted:
@@ -848,18 +845,20 @@ We can check the predictions and we can also see that the errors are normally di
 ```{r}
 ## Normal distribution of residuals.
 
-histogram(lm$residuals, par.settings=myTheme)
+histogram(lm$residuals, par.settings=myTheme, xlab='residuals')
 
 ```
 
-We can use the RMSE as an indicator of the model performance:
+
 
 ```{r}
 ## RMSE
 RMSE_lm <- sqrt(mean((results$x - results$fit)^2))
+RMSE_lm
+
 ```
 
-However, the variance of the residuals is not constant, which means that the linear model is not the best solution to this problem. It could be that we are missing some predictors or that some of the data collectd (those records with constant tip regardless the fare) cannot be used in the  model.
+However, the variance of the residuals is not constant, which means that the linear model may not be the best solution to this problem. It could be that we are missing some predictors or that some of the data collectd (those records with constant tip regardless the fare) cannot be used in the  model.
 
 ```{r}
 plot(lm$residuals~lm$fitted.values, cex=0.5, xlab='fit values', ylab='residuals')
@@ -895,8 +894,6 @@ abline(0,1, col='red')
 We can compute the error and RMSE as well. 
 
 ```{r}
-## R2
-
 RMSE_rf <- sqrt(mean((results$x-results$rf_predict)^2))
 RMSE_rf
 ```
@@ -907,7 +904,7 @@ err  <- round((abs(results$x-results$rf_predict)/results$x)*100, digits=1)
 histogram(err, par.settings=myTheme)
 ```
 
-The random forest approach slightly improves the multivariate regression model.
+The random forest approach gives similar results to the multivariate regression model.
 
 # FURTHER ANALYSIS
 
