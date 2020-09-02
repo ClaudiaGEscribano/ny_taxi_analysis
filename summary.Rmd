@@ -527,7 +527,7 @@ ggplot(b, aes(x=pu_do,y=value)) +
 
 ```
 
-The above picture shows that the are few differences on the data distribution of each variable regardless the *pick up* and *drop off area*. Among areas, we see how the borough of Manhattan is the one with lower fare, tip amount, trip distance and trip duration.
+The above picture shows that the are few differences on the data distribution of each variable regardless of the *pick up* and *drop off area*. Among areas, we see how the borough of Manhattan is the one with lower fare, tip amount, trip distance and trip duration.
 
 
 #### Relationship with day of the week
@@ -543,7 +543,7 @@ ggplot(all, aes(x=weekday,y=value)) +
 
 ```
 
-The figure shows that he sunday is different from the rest of the week, with higher median values fro the trip distance. However, the rest of the variables it seems to be higher in the central days of the weeks. Differences are small in any case.
+The figure shows that he sunday is different from the rest of the week, with higher median values from the trip distance. However, the rest of the variables it seems to be higher in the central days of the weeks. Differences are subtle in any case.
 
 #### Showing the intra trip variable
 
